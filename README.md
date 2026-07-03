@@ -7,9 +7,9 @@ Denial Navigator is an AI tool designed to help rural hospitals address and reso
 [![Watch the video](https://img.youtube.com/vi/KfOhLt07fic/hqdefault.jpg)](https://www.youtube.com/embed/KfOhLt07fic?si=_t_XY42PBeXxvp21)
 
 
-![Denial Navigator Main Page](assets/apphome.png)
+![Denial Navigator Main Page](apphome.png)
 
-![Denial Navigator Reccomendation](assets/appclaimwithfeedback.png)
+![Denial Navigator Reccomendation](appclaimwithfeedback.png)
 
 ## Licensing requirements
 * Power Apps license.
@@ -104,7 +104,7 @@ The following solution components are used in this sample:
 ## Data Sources
 
 ### Code Defintions
-CARC and RARC code definitions can be uploaded to the Dataverse table using the CSV in the [*data*](./data/rhail_codedefinitions.csv) folder
+CARC and RARC code definitions can be uploaded to the Dataverse table using the CSV in the [*data*](rhail_codedefinitions.csv) folder
 
 ## Minimal Path to Awesome
 

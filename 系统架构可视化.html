@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RHAIL Claims Denial Navigator 系统架构可视化</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+        }
+        
+        .section {
+            margin-bottom: 60px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section p {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+        
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+        
+        .key-points {
+            background: #e8f5e9;
+            padding: 25px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .key-points h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        
+        .key-points ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .key-points li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #555;
+        }
+        
+        .key-points li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .comparison-box {
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        
+        .comparison-box h3 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+        }
+        
+        .comparison-box.traditional {
+            border-color: #ff6b6b;
+            background: #fff5f5;
+        }
+        
+        .comparison-box.rag {
+            border-color: #4ecdc4;
+            background: #f0fffe;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .nav-tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        .nav-tab:hover {
+            background: #e0e0e0;
+        }
+        
+        .nav-tab.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 RHAIL Claims Denial Navigator</h1>
+        <p class="subtitle">系统架构可视化说明</p>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('overview')">整体架构</button>
+            <button class="nav-tab" onclick="showTab('flow')">数据流程</button>
+            <button class="nav-tab" onclick="showTab('rag')">RAG原理</button>
+            <button class="nav-tab" onclick="showTab('comparison')">架构对比</button>
+        </div>
+        
+        <!-- 整体架构标签页 -->
+        <div id="overview" class="tab-content active">
+            <div class="section">
+                <h2>🏗️ 整体系统架构</h2>
+                <div class="mermaid">
+graph TB
+    subgraph "用户层"
+        User[👤 用户]
+        PowerApp[📱 Power Apps用户界面]
+    end
+    
+    subgraph "数据输入层"
+        SharePoint[📁 SharePoint文件库]
+    end
+    
+    subgraph "工作流层 - Power Automate"
+        Trigger[⚡ 触发器监听文件创建]
+        MainFlow[🔄 主流程MainProcessFlow]
+        
+        subgraph "子流程组"
+            ParseHeader[📋 解析文件头ParseHeader835]
+            Parse835[📄 解析835理赔Parse835Claims]
+            Parse837[📄 解析837理赔Parse837Claims]
+            GetRec[💡 获取推荐GetRec]
+        end
+    end
+    
+    subgraph "AI服务层"
+        AzureOpenAI[🤖 Azure OpenAI GPT-4o]
+        
+        subgraph "RAG数据源"
+            AzureSearch[🔍 Azure AI Search]
+            ParseIndex[📚 Parse索引解析指南]
+            RecsIndex[📚 Recs索引理赔指南]
+        end
+        
+        BlobStorage[💾 Azure Blob Storage]
+    end
+    
+    subgraph "数据存储层"
+        Dataverse[(🗄️ Dataverse数据库)]
+    end
+    
+    User -->|上传文件| SharePoint
+    SharePoint -->|文件创建事件| Trigger
+    Trigger --> MainFlow
+    
+    MainFlow --> ParseHeader
+    MainFlow --> Parse835
+    MainFlow --> Parse837
+    MainFlow --> GetRec
+    
+    ParseHeader -->|HTTP POST| AzureOpenAI
+    Parse835 -->|HTTP POST| AzureOpenAI
+    Parse837 -->|HTTP POST| AzureOpenAI
+    GetRec -->|HTTP POST| AzureOpenAI
+    
+    AzureOpenAI <-->|检索文档| AzureSearch
+    AzureSearch --> ParseIndex
+    AzureSearch --> RecsIndex
+    BlobStorage -->|索引文档| AzureSearch
+    
+    AzureOpenAI -->|返回JSON| ParseHeader
+    AzureOpenAI -->|返回JSON| Parse835
+    AzureOpenAI -->|返回HTML建议| GetRec
+    
+    ParseHeader -->|存储数据| Dataverse
+    Parse835 -->|存储数据| Dataverse
+    Parse837 -->|存储数据| Dataverse
+    GetRec -->|存储推荐| Dataverse
+    
+    Dataverse -->|显示结果| PowerApp
+    PowerApp --> User
+    
+    style User fill:#e1f5ff
+    style PowerApp fill:#e1f5ff
+    style SharePoint fill:#fff4e1
+    style Trigger fill:#ffe1e1
+    style MainFlow fill:#ffe1e1
+    style AzureOpenAI fill:#e1ffe1
+    style AzureSearch fill:#e1ffe1
+    style Dataverse fill:#f0e1ff
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🧩 组件交互关系</h2>
+                <div class="mermaid">
+graph LR
+    subgraph "Power Platform生态"
+        PA[Power Automate工作流引擎]
+        DV[Dataverse数据库]
+        App[Power Apps应用界面]
+    end
+    
+    subgraph "Azure AI服务"
+        AOI[Azure OpenAI GPT-4o]
+        AS[Azure AI Search向量搜索]
+    end
+    
+    subgraph "存储服务"
+        SP[SharePoint文件库]
+        BS[Blob Storage文档存储]
+    end
+    
+    SP -.文件上传.-> PA
+    PA -.HTTP请求.-> AOI
+    AOI -.RAG检索.-> AS
+    AS -.索引文档.-> BS
+    AOI -.返回结果.-> PA
+    PA -.存储数据.-> DV
+    DV -.查询数据.-> App
+    
+    style PA fill:#ff6b6b
+    style AOI fill:#4ecdc4
+    style AS fill:#4ecdc4
+    style DV fill:#95e1d3
+    style App fill:#f38181
+                </div>
+            </div>
+        </div>
+        
+        <!-- 数据流程标签页 -->
+        <div id="flow" class="tab-content">
+            <div class="section">
+                <h2>🔄 文件解析流程</h2>
+                <div class="mermaid">
+sequenceDiagram
+    participant User as 👤 用户
+    participant SP as 📁 SharePoint
+    participant PA as ⚡ Power Automate
+    participant ParseFlow as 📄 Parse835Claims子流程
+    participant AOI as 🤖 Azure OpenAI
+    participant AS as 🔍 Azure Search
+    participant DV as 🗄️ Dataverse
+    participant App as 📱 Power Apps
+    
+    User->>SP: 上传835/837文件
+    SP->>PA: 触发文件创建事件
+    PA->>PA: 读取文件内容并分割成多个理赔
+    
+    Note over PA: 对每个理赔循环处理
+    
+    PA->>ParseFlow: 调用子流程传入理赔文本
+    ParseFlow->>AOI: HTTP POST请求解析理赔(data_sources: parse索引)
+    AOI->>AS: 自动检索Parse索引查找解析指南
+    AS-->>AOI: 返回相关文档
+    AOI->>AOI: 使用RAG增强生成解析为JSON
+    AOI-->>ParseFlow: 返回结构化JSON
+    ParseFlow-->>PA: 返回解析结果
+    
+    PA->>DV: 存储理赔数据到ClaimResponses表
+    
+    Note over PA: 处理Service Lines提取CARC代码
+    
+    PA->>PA: 对每个CARC代码调用GetRec生成推荐
+    PA->>DV: 存储推荐到ClaimAdjustmentCodes表
+    
+    DV-->>App: 数据更新
+    App-->>User: 显示解析结果和推荐
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>💡 推荐生成流程</h2>
+                <div class="mermaid">
+sequenceDiagram
+    participant User as 👤 用户
+    participant App as 📱 Power Apps
+    participant MainFlow as 🔄 主流程
+    participant GetRec as 💡 GetRec子流程
+    participant AOI as 🤖 Azure OpenAI
+    participant AS as 🔍 Azure Search
+    participant DV as 🗄️ Dataverse
+    
+    Note over MainFlow: 场景1: 主流程自动调用
+    
+    MainFlow->>MainFlow: 解析理赔后提取CARC和RARC代码
+    MainFlow->>GetRec: 调用GetRec子流程传入CARC/RARC/保险公司/FileGUID
+    
+    Note over App: 场景2: 用户手动触发
+    
+    User->>App: 选择理赔记录点击获取推荐按钮
+    App->>GetRec: 调用GetRec流程传入CARC/RARC/保险公司/FileGUID
+    
+    Note over GetRec: 构建查询提示词
+    
+    GetRec->>AOI: HTTP POST请求生成推荐(data_sources: Recs索引)
+    
+    Note over AOI,AS: RAG检索过程
+    AOI->>AS: 向量搜索查询相关文档
+    AS->>AS: 检索理赔指南政策文档用户反馈
+    AS-->>AOI: 返回Top 5相关文档
+    
+    AOI->>AOI: 基于检索文档生成个性化建议
+    AOI-->>GetRec: 返回HTML格式建议和引用来源
+    
+    GetRec-->>MainFlow: 返回推荐结果(场景1)
+    GetRec-->>App: 返回推荐结果(场景2)
+    
+    MainFlow->>DV: 存储推荐到ClaimAdjustmentCodes表
+    DV-->>App: 数据更新
+    App-->>User: 显示处理建议
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🔀 主流程决策树</h2>
+                <div class="mermaid">
+flowchart TD
+    Start([文件上传到SharePoint]) --> CheckType{检查文件类型}
+    
+    CheckType -->|835文件| Process835[处理835文件]
+    CheckType -->|837文件| Process837[处理837文件]
+    
+    Process835 --> ParseHeader[解析文件头ParseHeader835]
+    ParseHeader --> ParseClaims[解析理赔数据Parse835Claims]
+    
+    Process837 --> Parse837Claims[解析837理赔Parse837Claims]
+    
+    ParseClaims --> StoreData[存储到Dataverse]
+    Parse837Claims --> StoreData
+    
+    StoreData --> ProcessServiceLines[处理Service Lines提取CARC代码]
+    
+    ProcessServiceLines --> HasCARC{是否有CARC代码?}
+    
+    HasCARC -->|是| GetRecommendation[对每个CARC调用GetRec生成推荐]
+    HasCARC -->|否| Complete[完成]
+    
+    GetRecommendation --> StoreRec[存储推荐到ClaimAdjustmentCodes表]
+    StoreRec --> Complete
+    
+    Complete --> Display([在Power Apps显示])
+    
+    style Start fill:#e1f5ff
+    style CheckType fill:#fff4e1
+    style Process835 fill:#ffe1e1
+    style Process837 fill:#ffe1e1
+    style GetRecommendation fill:#e1ffe1
+    style Display fill:#f0e1ff
+                </div>
+            </div>
+        </div>
+        
+        <!-- RAG原理标签页 -->
+        <div id="rag" class="tab-content">
+            <div class="section">
+                <h2>📊 RAG工作原理详解</h2>
+                <div class="mermaid">
+graph TD
+    subgraph "步骤1: 文档准备"
+        Doc1[理赔处理指南.pdf]
+        Doc2[保险公司政策.docx]
+        Doc3[用户反馈.txt]
+        Doc4[CARC代码定义.csv]
+        
+        Doc1 --> BS[上传到Blob Storage]
+        Doc2 --> BS
+        Doc3 --> BS
+        Doc4 --> BS
+    end
+    
+    subgraph "步骤2: 索引构建"
+        BS --> Indexer[索引器运行]
+        Indexer -->|提取文本| Parser[文档解析器]
+        Parser -->|生成向量| Embedding[向量化]
+        Embedding -->|存储| ASIndex[Azure Search索引filerecs-autocreate]
+    end
+    
+    subgraph "步骤3: 查询时RAG"
+        Query[用户查询:CARCCode CO-16 RARCCode N255]
+        Query --> AOI[Azure OpenAI]
+        AOI -->|自动触发| VectorSearch[向量搜索]
+        VectorSearch -->|查询| ASIndex
+        ASIndex -->|返回Top 5| RelevantDocs[相关文档片段]
+        RelevantDocs --> AOI
+        AOI -->|增强生成| Response[个性化建议和引用来源]
+    end
+    
+    style BS fill:#ffe1e1
+    style ASIndex fill:#e1ffe1
+    style AOI fill:#e1f5ff
+    style Response fill:#fff4e1
+                </div>
+                
+                <div class="key-points">
+                    <h3>RAG的关键优势</h3>
+                    <ul>
+                        <li>自动检索相关文档，无需手动工具调用</li>
+                        <li>基于向量相似度找到最相关的文档片段</li>
+                        <li>生成结果包含引用来源，可追溯可验证</li>
+                        <li>支持大规模文档库的快速检索</li>
+                        <li>无需重新训练模型即可更新知识库</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🗂️ 数据流架构</h2>
+                <div class="mermaid">
+graph TB
+    subgraph "输入数据"
+        Input1[835文件文本格式]
+        Input2[837文件文本格式]
+    end
+    
+    subgraph "处理层"
+        P1[Power Automate解析流程]
+        P2[Azure OpenAI AI解析]
+        P3[Azure Search RAG检索]
+    end
+    
+    subgraph "输出数据"
+        O1[结构化JSON理赔数据]
+        O2[HTML建议处理方案]
+        O3[引用来源Citations]
+    end
+    
+    subgraph "存储"
+        S1[(Dataverse表1 Claims)]
+        S2[(Dataverse表2 ClaimResponses)]
+        S3[(Dataverse表3 Recommendations)]
+    end
+    
+    Input1 --> P1
+    Input2 --> P1
+    P1 --> P2
+    P2 <--> P3
+    P2 --> O1
+    P2 --> O2
+    P2 --> O3
+    
+    O1 --> S1
+    O1 --> S2
+    O2 --> S3
+    O3 --> S3
+    
+    style Input1 fill:#ffe1e1
+    style Input2 fill:#ffe1e1
+    style P2 fill:#e1ffe1
+    style P3 fill:#e1ffe1
+    style O2 fill:#fff4e1
+    style S1 fill:#f0e1ff
+    style S2 fill:#f0e1ff
+    style S3 fill:#f0e1ff
+                </div>
+            </div>
+        </div>
+        
+        <!-- 架构对比标签页 -->
+        <div id="comparison" class="tab-content">
+            <div class="section">
+                <h2>🆚 架构对比：传统LLM vs RAG架构</h2>
+                <div class="comparison">
+                    <div class="comparison-box traditional">
+                        <h3>❌ 传统LLM + MCP架构</h3>
+                        <div class="mermaid">
+graph LR
+    T1[用户输入] --> T2[MCP服务器]
+    T2 --> T3[工具调用]
+    T3 --> T4[LLM处理]
+    T4 --> T5[输出结果]
+    
+    style T2 fill:#ffcccc
+                        </div>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li>需要MCP服务器作为中间层</li>
+                            <li>需要显式工具调用</li>
+                            <li>LLM需要理解工具接口</li>
+                            <li>需要编写工具代码</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="comparison-box rag">
+                        <h3>✅ 本项目RAG架构</h3>
+                        <div class="mermaid">
+graph LR
+    P1[文件上传] --> P2[Power Automate]
+    P2 --> P3[Azure OpenAI]
+    P3 --> P4[自动RAG检索]
+    P4 --> P5[Azure Search]
+    P5 --> P6[文档增强]
+    P6 --> P7[生成结果]
+    P7 --> P8[存储到Dataverse]
+    
+    style P2 fill:#ccffcc
+    style P4 fill:#cceeff
+    style P5 fill:#cceeff
+                        </div>
+                        <ul style="margin-top: 15px; padding-left: 20px;">
+                            <li>无需MCP服务器</li>
+                            <li>自动RAG检索，无需显式调用</li>
+                            <li>LLM自动使用检索到的文档</li>
+                            <li>低代码配置，无需编写工具</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>🎯 关键区别总结</h2>
+                <div class="key-points">
+                    <h3>本项目架构特点</h3>
+                    <ul>
+                        <li><strong>不是MCP架构</strong>: 使用Power Automate + Azure OpenAI + Azure Search</li>
+                        <li><strong>RAG模式</strong>: Azure Search作为数据源，增强LLM生成</li>
+                        <li><strong>低代码平台</strong>: 基于Power Platform，使用JSON配置</li>
+                        <li><strong>自动化流程</strong>: 从文件上传到结果展示全自动</li>
+                        <li><strong>企业级集成</strong>: 与SharePoint、Dataverse、Power Apps深度集成</li>
+                        <li><strong>向量搜索</strong>: 使用语义相似度找到最相关文档</li>
+                        <li><strong>可追溯性</strong>: 生成结果包含引用来源</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📝 图例说明</h2>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e1f5ff;"></div>
+                    <span>用户界面和交互</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #fff4e1;"></div>
+                    <span>数据输入和存储</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffe1e1;"></div>
+                    <span>工作流和处理逻辑</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #e1ffe1;"></div>
+                    <span>AI服务和RAG</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f0e1ff;"></div>
+                    <span>数据库和持久化</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                diagramMarginX: 50,
+                diagramMarginY: 10,
+                actorMargin: 50,
+                width: 150,
+                height: 65,
+                boxMargin: 10,
+                boxTextMargin: 5,
+                noteMargin: 10,
+                messageMargin: 35
+            }
+        });
+        
+        function showTab(tabName) {
+            // 隐藏所有标签页内容
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // 移除所有标签按钮的active状态
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示选中的标签页
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>
